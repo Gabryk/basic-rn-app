@@ -17,6 +17,7 @@ anchors:
           command: |
             go get github.com/tcnksm/ghr
             export APP_VERSION=$CIRCLE_TAG
+            export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM
 
   steps: &base_steps
     - checkout:
