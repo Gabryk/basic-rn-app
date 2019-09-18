@@ -26,6 +26,12 @@ KEY_ALIAS=androiduploadkey
 KEY_PASSWORD=android
 STORE_PASSWORD=android
 
+## Setup GitHub API Token
+This is a GitHub feature that allows to handle Releases withing Git repo.
+
+Make sure tu define `GITHUB_TOKEN` ENV var en CircleCI.
+
+**More Info:** https://help.github.com/en/articles/creating-a-personal-access-token-for-the-command-line
 
 ## Deploying an Alpa release
 Create a git Tag as `v.`.

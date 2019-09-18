@@ -5,6 +5,19 @@ anchors:
     docker:
       - image: circleci/android:api-28-node8-alpha
     working_directory: ~/basic-rn-app/android
+
+  job-github-release: &base_ghr
+    docker:
+      - image: circleci/golang:1.8
+    steps: &ghr_steps
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          name: "Preparing GitHub Release"
+          command: |
+            go get github.com/tcnksm/ghr
+            export APP_VERSION=$CIRCLE_TAG
+
   steps: &base_steps
     - checkout:
       path: ~/basic-rn-app
@@ -17,6 +30,7 @@ anchors:
       key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
       paths:
         - vendor/bundle
+
   filters: &only_version
     filters:
       tags:
@@ -147,7 +161,15 @@ jobs:
 
       - store_artifacts:
           path: ios/test-results
-
+  
+  github-release:
+    <<: *base_ghr
+    steps:
+      - *ghr_steps
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -draft ${APP_VERSION} ./artifacts/
 workflows:
   version: 2
   node-android-ios:
@@ -163,6 +185,10 @@ workflows:
             - node
       - android-beta:
           <<: *only_version
+          requires:
+            - android-hold
+
+      - github-release:
           requires:
             - android-hold
       # - ios:
