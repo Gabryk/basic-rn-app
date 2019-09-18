@@ -1,0 +1,18 @@
+source "https://rubygems.org"
+require "base64"
+
+if ENV['GO_UPLOAD_KEYSTORE']
+    # Export from env the upload key file
+    output = File.open("app/upload.keystore","w" )
+    output << Base64.decode64(ENV['GO_UPLOAD_KEYSTORE'])
+    output.close
+end
+
+if ENV['GO_SERVICE_ACCOUNT']
+    # Export from env the google api credentials file
+    output = File.open( "service_account.json","w" )
+    output << Base64.decode64(ENV['GO_SERVICE_ACCOUNT'])
+    output.close
+end
+
+gem "fastlane"
