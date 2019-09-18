@@ -17,6 +17,12 @@ anchors:
       key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
       paths:
         - vendor/bundle
+  filters: &only_version
+    filters:
+      tags:
+        only: /^v.*/
+      branches:
+        ignore: /.*/
 
 jobs:
   node:
@@ -146,10 +152,19 @@ workflows:
   version: 2
   node-android-ios:
     jobs:
-      - node
-      - android:
+      - node:
+          <<: *only_version
+      - android-hold:
+          type: approval
+
+      - android-alpha:
+          <<: *only_version
           requires:
             - node
+      - android-beta:
+          <<: *only_version
+          requires:
+            - android-hold
       # - ios:
       #     requires:
       #       - node
