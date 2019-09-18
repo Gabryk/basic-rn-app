@@ -5,32 +5,38 @@ anchors:
     docker:
       - image: circleci/android:api-28-node8-alpha
     working_directory: ~/basic-rn-app/android
+    steps:
+      - &d_step1
+          checkout:
+            path: ~/basic-rn-app
+      - &d_step2
+          attach_workspace:
+            at: ~/basic-rn-app
+      - &d_step3
+          restore_cache:
+            key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
+      - &d_step4
+          run: bundle install
+      - &d_step5
+          save_cache:
+            key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
+            paths:
+              - vendor/bundle
 
   job-github-release: &base_ghr
     docker:
       - image: circleci/golang:1.8
-    steps: &ghr_steps
-      - attach_workspace:
-          at: ./artifacts
-      - run:
-          name: "Preparing GitHub Release"
-          command: |
-            go get github.com/tcnksm/ghr
-            export APP_VERSION=$CIRCLE_TAG
-            export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM
-
-  steps: &base_steps
-    - checkout:
-      path: ~/basic-rn-app
-    - attach_workspace:
-      at: ~/basic-rn-app
-    - restore_cache:
-      key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
-    - run: bundle install
-    - save_cache:
-      key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
-      paths:
-        - vendor/bundle
+    steps:
+      - &g_step1
+          attach_workspace:
+            at: ./artifacts
+      - &g_step2
+          run:
+            name: "Preparing GitHub Release"
+            command: |
+              go get github.com/tcnksm/ghr
+              export APP_VERSION=$CIRCLE_TAG
+              export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM
 
   filters: &only_version
     filters:
@@ -46,25 +52,19 @@ jobs:
       - image: circleci/node:8
     steps:
       - checkout
-
       - restore_cache:
           key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-
       - restore_cache:
           key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-
       - run: yarn install
-
       - save_cache:
           key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
           paths:
             - ~/.cache/yarn
-
       - save_cache:
           key: node-v1-{{ checksum "package.json" }}-{{ arch }}
           paths:
             - node_modules
-
       # - run:
       #     name: jest tests
       #     command: |
@@ -86,112 +86,93 @@ jobs:
 
   android-alpha:
     <<: *base_deploy
+    steps+:
+      - &run
+          run:
+            name: fastlane android alpha
+            command: |
+              bundle exec fastlane alpha
+      - &store_artifacts
+          store_artifacts:
+            path: android/app/build/outputs/apk/release/app-release.apk
     steps:
-      - *base_steps
-      - run:
-          name: fastlane android alpha
-          command: |
-            bundle exec fastlane alpha
-      - store_artifacts:
-          path: android/app/build/outputs/apk/release/app-release.apk
-  
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run,*store_artifacts]
   android-beta:
     <<: *base_deploy
-    steps:
-      - *base_steps
-      - run:
+    steps+:
+      - &run
+        run:
           name: fastlane android beta
           command: |
             bundle exec fastlane beta
-
-  ios-beta:
-    macos:
-      xcode: "10.1.0"
-    working_directory: ~/basic-rn-app
-    # use a --login shell so our "set Ruby version" command gets picked up for later steps
-    shell: /bin/bash --login -o pipefail
     steps:
-      - checkout
-      - run:
-          name: set Ruby version
-          command:  echo "ruby-2.4" > ~/.ruby-version
-      - restore_cache:
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-      - restore_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-      # not using a workspace here as Node and Yarn versions
-      # differ between our macOS executor image and the Docker containers above
-      - run: yarn install
-
-      - save_cache:
-          key: yarn-v1-{{ checksum "yarn.lock" }}-{{ arch }}
-          paths:
-            - ~/.cache/yarn
-
-      - save_cache:
-          key: node-v1-{{ checksum "package.json" }}-{{ arch }}
-          paths:
-            - node_modules
-
-      - restore_cache:
-          key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
-
-      - run:
-          command: bundle install
-          working_directory: ios
-
-      - save_cache:
-          key: bundle-v1-{{ checksum "ios/Gemfile.lock" }}-{{ arch }}
-          paths:
-            - vendor/bundle
-
-      - run:
-          command: bundle exec fastlane test
-          working_directory: ios
-
-      - run:
-          name: set up test results
-          working_directory: ios
-          when: always
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
+  android-dist:
+    <<: *base_deploy
+    steps+:
+      - &run
+        run:
+          name: Fastlane Android Distribution
           command: |
-            mkdir -p test-results/fastlane test-results/xcode
-            mv fastlane/report.xml test-results/fastlane
-            mv fastlane/test_output/report.junit test-results/xcode/junit.xml
-      - store_test_results:
-          path: ios/test-results
+            bundle exec fastlane dist
+    steps:
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
 
-      - store_artifacts:
-          path: ios/test-results
-  
   github-release:
     <<: *base_ghr
-    steps:
-      - *ghr_steps
-      - run:
+    steps+:
+      - &run
+        run:
           name: "Publish Release on GitHub"
           command: |
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -draft ${APP_VERSION} ./artifacts/
+    steps:
+      [*g_step1,*g_step2,*run]
+
+  github-prerelease:
+    <<: *base_ghr
+    steps+:
+      - &run
+          run:
+            name: "Publish Pre-Release on GitHub"
+            command: |
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -draft -prerelease ${APP_VERSION} ./artifacts/
+    steps:
+      [*g_step1,*g_step2,*run]
+
 workflows:
   version: 2
   node-android-ios:
     jobs:
       - node:
           <<: *only_version
-      - android-hold:
+      - android-beta-hold:
           type: approval
+          requires:
+            - android-alpha # Run after the Alpha build has succeeded
+      - android-dist-hold:
+          type: approval
+          requires:
+            - android-beta-hold # Run only if Beta was approved
 
       - android-alpha:
           <<: *only_version
           requires:
             - node
+      # Deliver Beta only if Beta was approved
       - android-beta:
           <<: *only_version
           requires:
-            - android-hold
+            - android-beta-hold
+      # Deliver Distribution only if Beta & Distribution was approved 
+      - android-dist:
+          <<: *only_version
+          requires:
+            - android-dist-hold
 
+      - github-prerelease:
+          requires:
+            - android-beta-hold
       - github-release:
           requires:
-            - android-hold
-      # - ios:
-      #     requires:
-      #       - node
+            - android-dist-hold
