@@ -40,7 +40,7 @@ anchors:
               export BUILD_NUMBER=$CIRCLE_PREVIOUS_BUILD_NUM
               export PROJECT=$CIRCLE_PROJECT_REPONAME
               curl https://circleci.com/api/v1.1/project/github/$USERNAME/$PROJECT/$BUILD_NUMBER/artifacts?circle-token=$CIRCLE_TOKEN | grep -o 'https://[^"]*' | sed -e "s/$/?circle-token=$CIRCLE_TOKEN/" | wget -P artifacts/ -v -i -
-              rename 's/.circle-token=$CIRCLE_TOKEN//' artifacts/*
+              rename -v -n 's/.circle-token=\Q$ENV{CIRCLE_TOKEN}\E//' artifacts/*
       - &g_step2
           run:
             name: "Preparing GitHub Release"
