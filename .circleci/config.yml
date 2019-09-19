@@ -24,6 +24,11 @@ anchors:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
             paths:
               - vendor/bundle
+      - &d_step6
+          persist_to_workspace:
+            root: ~/basic-rn-app
+            paths:
+              - node_modules
 
   job-github-release: &base_ghr
     docker:
@@ -98,7 +103,7 @@ jobs:
           store_artifacts:
             path: android/app/build/outputs/apk/release/app-release.apk
     steps:
-      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run,*store_artifacts]
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*d_step6,*run,*store_artifacts]
   android-beta:
     <<: *base_deploy
     steps+:
@@ -108,7 +113,7 @@ jobs:
           command: |
             bundle exec fastlane beta
     steps:
-      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*d_step6,*run]
   android-dist:
     <<: *base_deploy
     steps+:
@@ -118,7 +123,7 @@ jobs:
           command: |
             bundle exec fastlane dist
     steps:
-      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*d_step6,*run]
 
   github-release:
     <<: *base_ghr
