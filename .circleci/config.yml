@@ -37,7 +37,7 @@ anchors:
             command: |
               mkdir artifacts
               export USERNAME=$CIRCLE_PROJECT_USERNAME
-              export BUILD_NUMBER=$CIRCLE_BUILD_NUM
+              export BUILD_NUMBER=$CIRCLE_PREVIOUS_BUILD_NUM
               export PROJECT=$CIRCLE_PROJECT_REPONAME
               curl https://circleci.com/api/v1.1/project/github/$USERNAME/$PROJECT/$BUILD_NUMBER/artifacts?circle-token=$CIRCLE_TOKEN | grep -o 'https://[^"]*' | sed -e "s/$/?circle-token=$CIRCLE_TOKEN/" | wget -P artifacts/ -v -i -
       - &g_step2
@@ -46,7 +46,7 @@ anchors:
             command: |
               go get -u github.com/tcnksm/ghr
               echo "export APP_VERSION=$CIRCLE_TAG" >> $BASH_ENV
-              echo "export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM" >> $BASH_ENV
+              echo "export APP_BUIL_NUMBER=$CIRCLE_PREVIOUS_BUILD_NUM" >> $BASH_ENV
 
   filters: &only_version
     filters:
