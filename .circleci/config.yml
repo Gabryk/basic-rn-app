@@ -29,7 +29,7 @@ anchors:
 
   job-github-release: &base_ghr
     docker:
-      - image: circleci/golang:1.7
+      - image: circleci/golang:1.13.0
     steps:
       - &g_step1
           run:
