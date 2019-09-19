@@ -19,8 +19,8 @@ anchors:
           run: |
             gem install bundler -v 2.0.2
             bundle install
-            echo "APP_VERSION=$CIRCLE_TAG" >> $BASH_ENV
-            echo "APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM" >> $BASH_ENV
+            echo "export APP_VERSION=$CIRCLE_TAG" >> $BASH_ENV
+            echo "export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM" >> $BASH_ENV
       - &d_step5
           save_cache:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
@@ -39,8 +39,8 @@ anchors:
             name: "Preparing GitHub Release"
             command: |
               go get github.com/tcnksm/ghr
-              export APP_VERSION=$CIRCLE_TAG
-              export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM
+              echo "export APP_VERSION=$CIRCLE_TAG" >> $BASH_ENV
+              echo "export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM" >> $BASH_ENV
 
   filters: &only_version
     filters:
@@ -150,6 +150,12 @@ workflows:
     jobs:
       - node:
           <<: *only_version
+
+      - android-alpha:
+          <<: *only_version
+          requires:
+            - node
+
       - android-beta-hold:
           type: approval
           requires: # Run after the Alpha build has succeeded
@@ -159,10 +165,6 @@ workflows:
           requires: # Run only if Beta was approved
             - android-alpha
 
-      - android-alpha:
-          <<: *only_version
-          requires:
-            - node
       # Deliver Beta only if Beta was approved
       - android-beta:
           <<: *only_version
