@@ -24,11 +24,6 @@ anchors:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
             paths:
               - vendor/bundle
-      - &d_step6
-          persist_to_workspace:
-            root: ~/basic-rn-app
-            paths:
-              - node_modules
 
   job-github-release: &base_ghr
     docker:
@@ -80,10 +75,10 @@ jobs:
       #     environment:
       #       JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
 
-      # - persist_to_workspace:
-      #     root: ~/basic-rn-app
-      #     paths:
-      #       - node_modules
+      - persist_to_workspace:
+          root: ~/basic-rn-app
+          paths:
+            - node_modules
 
       # - store_test_results:
       #     path: test-results
@@ -113,7 +108,7 @@ jobs:
           command: |
             bundle exec fastlane beta
     steps:
-      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*d_step6,*run]
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
   android-dist:
     <<: *base_deploy
     steps+:
@@ -123,7 +118,7 @@ jobs:
           command: |
             bundle exec fastlane dist
     steps:
-      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*d_step6,*run]
+      [*d_step1,*d_step2,*d_step3,*d_step4,*d_step5,*run]
 
   github-release:
     <<: *base_ghr
