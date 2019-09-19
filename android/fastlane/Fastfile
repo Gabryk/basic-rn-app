@@ -29,7 +29,7 @@ platform :android do
   end
 
   desc "Promote Alpha build to Beta"
-  lane :deploy do
+  lane :beta do
     upload_to_play_store(track: "alpha", track_promote_to: "beta")
   end
 end
