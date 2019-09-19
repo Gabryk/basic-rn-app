@@ -179,8 +179,10 @@ workflows:
             - android-dist-hold
 
       - github-prerelease:
+          <<: *only_version
           requires:
             - android-beta-hold
       - github-release:
+          <<: *only_version
           requires:
             - android-dist-hold
