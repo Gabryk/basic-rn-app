@@ -32,13 +32,18 @@ anchors:
       - image: circleci/golang:1.8
     steps:
       - &g_step1
-          attach_workspace:
-            at: ./artifacts
+          run:
+            name: "Download Artifacts"
+            command: |
+              export USERNAME=$CIRCLE_PROJECT_USERNAME
+              export BUILD_NUMBER=$CIRCLE_BUILD_NUM
+              export PROJECT=$CIRCLE_PROJECT_REPONAME
+              curl https://circleci.com/api/v1.1/project/github/$USERNAME/$PROJECT/$BUILD_NUMBER/artifacts?circle-token=$CIRCLE_TOKEN | grep -o 'https://[^"]*' | sed -e "s/$/?circle-token=$CIRCLE_TOKEN/" | wget -v -i -
       - &g_step2
           run:
             name: "Preparing GitHub Release"
             command: |
-              go get github.com/tcnksm/ghr
+              go get -u github.com/tcnksm/ghr
               echo "export APP_VERSION=$CIRCLE_TAG" >> $BASH_ENV
               echo "export APP_BUIL_NUMBER=$CIRCLE_BUILD_NUM" >> $BASH_ENV
 
