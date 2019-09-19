@@ -158,6 +158,7 @@ workflows:
             - android-beta-hold # Run only if Beta was approved
 
       - android-alpha:
+          <<: *only_version
           requires:
             - node
       # Deliver Beta only if Beta was approved
