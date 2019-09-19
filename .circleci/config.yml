@@ -17,8 +17,6 @@ anchors:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
       - &d_step4
           run: |
-            bundle --version
-            bundle exec 'gem --version'
             gem install bundler -v 2.0.2
             bundle install
       - &d_step5
