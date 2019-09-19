@@ -35,10 +35,11 @@ anchors:
           run:
             name: "Download Artifacts"
             command: |
+              mkdir artifacts
               export USERNAME=$CIRCLE_PROJECT_USERNAME
               export BUILD_NUMBER=$CIRCLE_BUILD_NUM
               export PROJECT=$CIRCLE_PROJECT_REPONAME
-              curl https://circleci.com/api/v1.1/project/github/$USERNAME/$PROJECT/$BUILD_NUMBER/artifacts?circle-token=$CIRCLE_TOKEN | grep -o 'https://[^"]*' | sed -e "s/$/?circle-token=$CIRCLE_TOKEN/" | wget -v -i -
+              curl https://circleci.com/api/v1.1/project/github/$USERNAME/$PROJECT/$BUILD_NUMBER/artifacts?circle-token=$CIRCLE_TOKEN | grep -o 'https://[^"]*' | sed -e "s/$/?circle-token=$CIRCLE_TOKEN/" | wget -P artifacts/ -v -i -
       - &g_step2
           run:
             name: "Preparing GitHub Release"
@@ -134,7 +135,7 @@ jobs:
         run:
           name: "Publish Release on GitHub"
           command: |
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -draft ${APP_VERSION} ./artifacts/
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -replace -draft ${APP_VERSION} artifacts/
     steps:
       [*g_step1,*g_step2,*run]
 
