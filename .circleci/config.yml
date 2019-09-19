@@ -157,10 +157,12 @@ workflows:
             - node
 
       - android-beta-hold:
+          <<: *only_version
           type: approval
           requires: # Run after the Alpha build has succeeded
             - android-alpha
       - android-dist-hold:
+          <<: *only_version
           type: approval
           requires: # Run only if Beta was approved
             - android-alpha
