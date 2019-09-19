@@ -16,7 +16,9 @@ anchors:
           restore_cache:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
       - &d_step4
-          run: bundle install
+          run: |
+            sudo gem install bundler -v 2.0.2
+            bundle install
       - &d_step5
           save_cache:
             key: bundle-v1-{{ checksum "Gemfile.lock" }}-{{ arch }}
