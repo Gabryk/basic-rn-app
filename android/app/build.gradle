@@ -131,6 +131,11 @@ def STORE_PASSWORD = System.getenv("STORE_PASSWORD") ?: "android"
 def APP_VERSION = System.getenv("APP_VERSION") ?: "v1.0"
 def APP_BUIL_NUMBER = System.getenv("APP_BUIL_NUMBER") ?: 1
 
+println 'APP_VERSION:'
+println APP_VERSION
+println 'APP_BUIL_NUMBER:'
+println APP_BUIL_NUMBER
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
